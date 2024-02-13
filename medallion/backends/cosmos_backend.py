@@ -39,7 +39,7 @@ class CosmosBackend(Backend):
                     self.initialize_cosmos_with_data(file_name)
                     self.object_manifest_check()
 
-            super(CosmosBackend, self).__init__(**kwargs)
+            # super(CosmosBackend, self).__init__(**kwargs)
         except ConnectionError:
             log.error(
                 "Unable to establish a connection to MongoDB server {}".format(
@@ -57,7 +57,17 @@ class CosmosBackend(Backend):
         raise NotImplementedError()
 
     def server_discovery(self):
-        raise NotImplementedError()
+        discovery_db = self.client.get_database_client("discovery_database")
+        discovery_info = discovery_db.get_container_client(
+            "discovery_information"
+        )
+        info = list(
+            discovery_info.query_items(
+                "SELECT top 1 * FROM c", enable_cross_partition_query=True
+            )
+        )
+        if info and len(info) > 0:
+            return info[0]
 
     def get_collections(self, api_root):
         raise NotImplementedError()
